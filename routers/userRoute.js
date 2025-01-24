@@ -42,7 +42,7 @@ router.post("/login", async (req, res) => {
         if (!isMatch) return res.status(401).json({ msg: "Invalid credentials" });
 
         const token = generateToken(user);
-        console.log('token', token)
+        // console.log('token', token)
         res.cookie("token", token, { httpOnly: true });
 
         res.status(200).json({ msg: "Login successful", token, role: user.role, name: user.name, email: user.email, });
@@ -60,9 +60,9 @@ router.get("/profile", async (req, res) => {
         }
 
         const token = authHeader.split(" ")[1]; // Extract the token part (after "Bearer ")
-        console.log('token in profile  ', token)
+        // console.log('token in profile  ', token)
         // Verify the token (using JWT or your chosen library)
-        console.log('jwtseceret', process.env.JWT_SECRET)
+        // console.log('jwtseceret', process.env.JWT_SECRET)
         jwt.verify(token, process.env.JWT_SECRET, async (err, user) => {
             if (err) {
                 console.log(err)
@@ -72,8 +72,8 @@ router.get("/profile", async (req, res) => {
             // Token is valid, proceed with the request
             req.user = user; // Attach the decoded user data to the request object
             const singleUser = await User.findOne({ email: user.email })
-            console.log('singe user', singleUser)
-            console.log('user in profile', user)
+            // console.log('singe user', singleUser)
+            // console.log('user in profile', user)
             res.status(200).json({ msg: "Token is valid", user: singleUser });
         });
 
