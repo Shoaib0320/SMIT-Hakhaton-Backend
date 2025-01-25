@@ -91,51 +91,61 @@ router.delete("/:id", async (req, res) => {
 
 // Fetch all categories with their subcategories
 router.get("/with-subcategories", async (req, res) => {
-    try {
-        // Fetch categories and populate subcategories
-        const categories = await Category.find().lean();
+	try {
+		// Fetch categories and populate subcategories
+		const categories = await Category.find().lean();
 
-        const categoriesWithSubcategories = await Promise.all(
-            categories.map(async (category) => {
-                const subcategories = await SubCategoryModal.find({ category: category._id });
-                return {
-                    ...category,
-                    subcategories,
-                };
-            })
-        );
+		const categoriesWithSubcategories = await Promise.all(
+			categories.map(async (category) => {
+				const subcategories = await SubCategoryModal.find({ category: category._id });
+				return {
+					...category,
+					subcategories,
+				};
+			})
+		);
 
-        res.status(200).json({
-            msg: "Categories with subcategories fetched successfully",
-            error: false,
-            data: categoriesWithSubcategories,
-        });
-    } catch (error) {
-        res.status(500).json({
-            msg: "Failed to fetch categories with subcategories",
-            error: error.message,
-        });
-    }
+		res.status(200).json({
+			msg: "Categories with subcategories fetched successfully",
+			error: false,
+			data: categoriesWithSubcategories,
+		});
+	} catch (error) {
+		res.status(500).json({
+			msg: "Failed to fetch categories with subcategories",
+			error: error.message,
+		});
+	}
 });
 
 // Fetch a single category by ID
 router.get("/singleCategory/:id", async (req, res) => {
 	try {
-	  const category = await Category.findById(req.params.id);
-	  if (!category) {
-		return res.status(404).json({ msg: "Category not found", error: true });
-	  }
-	  res.status(200).json({
-		msg: "Category fetched successfully",
-		data: category,
-		error: false,
-	  });
+		const category = await Category.findById(req.params.id);
+		if (!category) {
+			return res.status(404).json({ msg: "Category not found", error: true });
+		}
+		const categoriesWithSubcategories = await Promise.all(
+			category.map(async (category) => {
+				const subcategories = await SubCategoryModal.find({ category: category._id });
+				return {
+					...category,
+					subcategories,
+				};
+			})
+		);
+
+		res.status(200).json({
+			msg: "Categories with subcategories fetched successfully",
+			error: false,
+			data: categoriesWithSubcategories,
+		});
 	} catch (error) {
-	  res.status(500).json({
-		msg: "Failed to fetch category",
-		error: error.message,
-	  });
+		res.status(500).json({
+			msg: "Failed to fetch category",
+			error: error.message,
+		});
 	}
-  });
+});
 
 export default router;
