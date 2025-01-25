@@ -23,7 +23,7 @@ app.use(
 	cors({
 	  origin: [
 		"http://localhost:5173",  // Allow localhost for development
-		"https://manegement-system.vercel.app",  // Allow Vercel URL for production
+		"https://smit-hakhaton-frontend.vercel.app",  // Allow Vercel URL for production
 	  ], // Allow these specific frontend addresses
 	  methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
 	  allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
