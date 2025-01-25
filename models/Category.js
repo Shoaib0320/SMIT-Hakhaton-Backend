@@ -5,8 +5,8 @@ const categorySchema = new Schema(
 	{
 		title: { type: String, required: true },
 		description: { type: String, required: true },
-		// duration: { type: String, required: true },
-		// thumbnail: { type: String, required: true },
+		maxLoan: { type: String, required: true },
+		loanPeriod: { type: String, required: true },
 	},
 	{ timestamps: true }
 );

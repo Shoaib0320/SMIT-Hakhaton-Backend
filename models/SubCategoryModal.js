@@ -14,5 +14,5 @@ const subCategorySchema = new Schema(
 	{ timestamps: true }
 );
 
-const SubCategoryModal = mongoose.model("SybCategory", subCategorySchema);
+const SubCategoryModal = mongoose.model("SubCategory", subCategorySchema);
 export default SubCategoryModal;
