@@ -1,5 +1,4 @@
 // Import Express
-// Import Express
 import express from 'express';
 import dotenv from 'dotenv'
 import cors from 'cors'
@@ -31,7 +30,6 @@ app.use(
 	})
   );
   
-
 // Routes Api
 app.use("/users", usersRoutes);
 app.use("/courses",courseRoutes)
@@ -40,7 +38,6 @@ app.use("/courses",courseRoutes)
 app.get('/', (req, res) => {
   res.send('Welcome to the Node.js Backend!');
 });
-
 
 // Start Server
 app.listen(PORT, () => {
