@@ -3,7 +3,8 @@ import express from 'express';
 import dotenv from 'dotenv'
 import cors from 'cors'
 import usersRoutes from "./routers/userRoute.js";
-import courseRoutes from "./routers/courseRoute.js";
+import categoryRoutes from "./routers/categoryRoute.js";
+import subCategoryRoutes from "./routers/subCategoryRoute.js";
 import { connectDB } from "./lib/DB/connectDB.js";
 
 const app = express(); // Express App Create Karo
@@ -32,7 +33,8 @@ app.use(
   
 // Routes Api
 app.use("/users", usersRoutes);
-app.use("/courses",courseRoutes)
+app.use("/category",categoryRoutes)
+app.use("/subCategory",subCategoryRoutes)
 
 // Routes
 app.get('/', (req, res) => {

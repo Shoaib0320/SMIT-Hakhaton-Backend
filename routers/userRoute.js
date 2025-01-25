@@ -14,11 +14,11 @@ const generateToken = (user) => {
 
 // Signup
 router.post("/signup", async (req, res) => {
-    const { name, email, password, role } = req.body;
+    const { name, email, cnic, role } = req.body;
 
     try {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new User({ name, email, password: hashedPassword, role });
+        // const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = new User({ name, email, cnic, role });
         await newUser.save();
 
         const token = generateToken(newUser);
@@ -32,14 +32,14 @@ router.post("/signup", async (req, res) => {
 
 // Login
 router.post("/login", async (req, res) => {
-    const { email, password } = req.body;
+    const { email, cnic } = req.body;
 
     try {
         const user = await User.findOne({ email });
         if (!user) return res.status(404).json({ msg: "User not found" });
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(401).json({ msg: "Invalid credentials" });
+        const userCnic = await User.findOne({ cnic });
+        if (!userCnic) return res.status(404).json({ msg: "User Cnic not found" });
 
         const token = generateToken(user);
         // console.log('token', token)
