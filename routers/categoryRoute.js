@@ -121,24 +121,26 @@ router.get("/with-subcategories", async (req, res) => {
 // Fetch a single category by ID
 router.get("/singleCategory/:id", async (req, res) => {
 	try {
-		const category = await Category.findById(req.params.id);
+		// Fetch the category by ID
+		const category = await Category.findById(req.params.id).lean(); // Use lean() for better performance
+
 		if (!category) {
 			return res.status(404).json({ msg: "Category not found", error: true });
 		}
-		const categoriesWithSubcategories = await Promise.all(
-			category.map(async (category) => {
-				const subcategories = await SubCategoryModal.find({ category: category._id });
-				return {
-					...category,
-					subcategories,
-				};
-			})
-		);
+
+		// Fetch subcategories for this category
+		const subcategories = await SubCategoryModal.find({ category: category._id });
+
+		// Add subcategories to the category object
+		const categoryWithSubcategories = {
+			...category,
+			subcategories,
+		};
 
 		res.status(200).json({
-			msg: "Categories with subcategories fetched successfully",
+			msg: "Category with subcategories fetched successfully",
 			error: false,
-			data: categoriesWithSubcategories,
+			data: categoryWithSubcategories,
 		});
 	} catch (error) {
 		res.status(500).json({
@@ -147,5 +149,6 @@ router.get("/singleCategory/:id", async (req, res) => {
 		});
 	}
 });
+
 
 export default router;
