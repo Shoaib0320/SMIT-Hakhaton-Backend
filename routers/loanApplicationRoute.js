@@ -7,8 +7,8 @@ const router = express.Router();
 // Apply for Loan
 router.post("/apply", verifyToken, async (req, res) => {
   try {
-    const { userId, categoryId, subcategory, amount } = req.body;
-    const application = new LoanApplicationModal({ userId, categoryId, subcategory, amount });
+    const { userId, categoryId, amount } = req.body;
+    const application = new LoanApplicationModal({ userId, categoryId, amount });
     await application.save();
     res.json({ success: true, application });
   } catch (error) {

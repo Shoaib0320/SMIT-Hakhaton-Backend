@@ -118,5 +118,24 @@ router.get("/with-subcategories", async (req, res) => {
     }
 });
 
+// Fetch a single category by ID
+router.get("/singleCategory/:id", async (req, res) => {
+	try {
+	  const category = await Category.findById(req.params.id);
+	  if (!category) {
+		return res.status(404).json({ msg: "Category not found", error: true });
+	  }
+	  res.status(200).json({
+		msg: "Category fetched successfully",
+		data: category,
+		error: false,
+	  });
+	} catch (error) {
+	  res.status(500).json({
+		msg: "Failed to fetch category",
+		error: error.message,
+	  });
+	}
+  });
 
 export default router;
