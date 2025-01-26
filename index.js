@@ -5,6 +5,7 @@ import cors from 'cors'
 import usersRoutes from "./routers/userRoute.js";
 import categoryRoutes from "./routers/categoryRoute.js";
 import subCategoryRoutes from "./routers/subCategoryRoute.js";
+import CalculateRoutes from "./routers/loanCategory.js";
 import { connectDB } from "./lib/DB/connectDB.js";
 
 const app = express(); // Express App Create Karo
@@ -35,6 +36,7 @@ app.use(
 app.use("/users", usersRoutes);
 app.use("/category",categoryRoutes)
 app.use("/subCategory",subCategoryRoutes)
+app.use("/calculate",CalculateRoutes)
 
 // Routes
 app.get('/', (req, res) => {
