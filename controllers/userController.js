@@ -191,16 +191,44 @@ export const submitLoanRequest = async (req, res) => {
   }
 }
 
+// export const getLoanRequests = async (req, res) => {
+//   const { userId } = req.params
+//   try {
+//     const loanRequests = await LoanRequestModel.find({ user: userId }).sort({ createdAt: -1 })
+//     res.status(200).json({ loanRequests })
+
+//   } catch (err) {
+//     console.log("err", err)
+//     res.status(500).json({ error: err.message })
+//   }
+// }
+
+// export const getLoanRequests = async (req, res) => {
+//   const { userId } = req.params
+
+//   try {
+//     const loanRequests = await LoanRequestModel.find()
+//     res.status(200).json({ loanRequests })
+//     console.log('loanRequests', loanRequests);
+    
+//   } catch (err) {
+//     console.error("Error fetching loan requests:", err)
+//     res.status(500).json({ error: err.message })
+//   }
+// }
+
 export const getLoanRequests = async (req, res) => {
   const { userId } = req.params
+
   try {
-    const loanRequests = await LoanRequestModel.find({ user: userId }).sort({ createdAt: -1 })
+    const loanRequests = await LoanRequestModel.find({ user: userId })
     res.status(200).json({ loanRequests })
   } catch (err) {
     console.log("err", err)
     res.status(500).json({ error: err.message })
   }
 }
+
 
 // Generate Slip
 export const generateSlip = async (req, res) => {
@@ -218,3 +246,13 @@ export const generateSlip = async (req, res) => {
   }
 };
 
+
+export const getAllLoanRequests = async (req, res) => {
+  try {
+    const loanRequests = await LoanRequestModel.find().populate("user", "name email")
+    res.status(200).json({ loanRequests })
+  } catch (err) {
+    console.log("err", err)
+    res.status(500).json({ error: err.message })
+  }
+}

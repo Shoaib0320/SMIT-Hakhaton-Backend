@@ -6,7 +6,6 @@ const loanRequestSchema = new mongoose.Schema({
   // subcategory: { type: String, required: true },
   amount: { type: Number, required: true },
   loanPeriod: { type: Number, required: true },
-  // guarantors: [{ type: String, required: true}],
   guarantors: [
     {
       name: { type: String, required: true },

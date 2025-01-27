@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema({
     enum: ["user", "admin",],
     default: "user",
   },
-  loans: [{ type: mongoose.Schema.Types.ObjectId, ref: 'LoanRequest' }]
+  // loans: [{ type: mongoose.Schema.Types.ObjectId, ref: 'LoanRequest' }]
 });
 
 const UserModel = mongoose.model('User', userSchema);
