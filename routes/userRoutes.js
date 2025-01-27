@@ -10,7 +10,7 @@ const router = express.Router();
 router.post('/signup', registerUser);
 router.post('/login', loginUser);
 router.post('/submit-loan', submitLoanRequest);
-router.get('//getLoanRequests/:userId', getLoanRequests);
+router.get('/getLoanRequests/:userId', getLoanRequests);
 router.post('/generate-slip', generateSlip);
 
 router.get("/getAllLoanRequests", getAllLoanRequests);

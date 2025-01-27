@@ -203,31 +203,33 @@ export const submitLoanRequest = async (req, res) => {
 //   }
 // }
 
-// export const getLoanRequests = async (req, res) => {
-//   const { userId } = req.params
-
-//   try {
-//     const loanRequests = await LoanRequestModel.find()
-//     res.status(200).json({ loanRequests })
-//     console.log('loanRequests', loanRequests);
-    
-//   } catch (err) {
-//     console.error("Error fetching loan requests:", err)
-//     res.status(500).json({ error: err.message })
-//   }
-// }
-
 export const getLoanRequests = async (req, res) => {
   const { userId } = req.params
 
   try {
-    const loanRequests = await LoanRequestModel.find({ user: userId })
+    const loanRequests = await LoanRequestModel.find()
     res.status(200).json({ loanRequests })
+    console.log('loanRequests', loanRequests);
+    
   } catch (err) {
-    console.log("err", err)
+    console.error("Error fetching loan requests:", err)
     res.status(500).json({ error: err.message })
   }
 }
+
+// export const getLoanRequests = async (req, res) => {
+//     try {
+//       const userId = req.user._id // Get the user ID from the authenticated user
+//       const loanRequests = await LoanRequestModel.find({ user: userId })
+//         .sort({ createdAt: -1 }) // Sort by creation date, newest first
+//         .populate("user", "name email") // Populate user details if needed
+  
+//       res.status(200).json({ loanRequests })
+//     } catch (err) {
+//       console.error("Error fetching user loan requests:", err)
+//       res.status(500).json({ error: "An error occurred while fetching loan requests" })
+//     }
+// }
 
 
 // Generate Slip
