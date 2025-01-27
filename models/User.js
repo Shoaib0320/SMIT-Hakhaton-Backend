@@ -1,20 +1,13 @@
-// Backend: User Model (models/User.js)
-import mongoose from "mongoose";
-const { Schema } = mongoose;
+import mongoose from 'mongoose';
 
-const userSchema = new Schema(
-  {
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    cnic: { type: String, required: true },
-    role: {
-      type: String,
-      enum: ["user", "admin",],
-      default: "user",
-    },
-  },
-  { timestamps: true }
-);
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, unique: true, required: true },
+  password: { type: String, required: true },
+  cnic: { type: String, unique: true, required: true },
+  loans: [{ type: mongoose.Schema.Types.ObjectId, ref: 'LoanRequest' }]
+});
 
-const User = mongoose.model("User", userSchema);
-export default User;
+const UserModel = mongoose.model('User', userSchema);
+
+export default UserModel

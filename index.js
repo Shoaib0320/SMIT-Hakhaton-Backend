@@ -1,24 +1,14 @@
-// Import Express
+import dotenv from 'dotenv';
 import express from 'express';
-import dotenv from 'dotenv'
+import userRoutes from './routes/userRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import { connectDB } from './config/db.js';
 import cors from 'cors'
-import usersRoutes from "./routers/userRoute.js";
-import categoryRoutes from "./routers/categoryRoute.js";
-import subCategoryRoutes from "./routers/subCategoryRoute.js";
-import CalculateRoutes from "./routers/loanCategory.js";
-import { connectDB } from "./lib/DB/connectDB.js";
 
-const app = express(); // Express App Create Karo
-const PORT = 1222; // Port Define Karo
+dotenv.config();
 
-// Load environment variables from .env.local
-dotenv.config(); // Load .env variables
-
-// Middleware (JSON Data Handle Karne Ke Liye)
+const app = express();
 app.use(express.json());
-
-// Connect to the database
-connectDB();
 
 app.use(
 	cors({
@@ -31,19 +21,13 @@ app.use(
 	  credentials: true,              // Allows cookies to be sent
 	})
   );
-  
-// Routes Api
-app.use("/users", usersRoutes);
-app.use("/category",categoryRoutes)
-app.use("/subCategory",subCategoryRoutes)
-app.use("/calculate",CalculateRoutes)
+
+// Connect to DB
+connectDB();
 
 // Routes
-app.get('/', (req, res) => {
-  res.send('Welcome to the Node.js Backend!');
-});
+app.use('/users', userRoutes);
+app.use('/api/admin', adminRoutes);
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
