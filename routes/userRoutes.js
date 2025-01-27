@@ -3,7 +3,7 @@ import { registerUser, loginUser, submitLoanRequest, generateSlip } from '../con
 
 const router = express.Router();
 
-router.post('/register', registerUser);
+router.post('/signup', registerUser);
 router.post('/login', loginUser);
 router.post('/submit-loan', submitLoanRequest);
 router.post('/generate-slip', generateSlip);
