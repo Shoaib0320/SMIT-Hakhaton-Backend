@@ -85,10 +85,93 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// Submit Loan Request
-export const submitLoanRequest = async (req, res) => {
-  const { userId, category, subcategory, amount, loanPeriod, personalInfo, guarantors } = req.body;
+export const getUserData = async (req, res) => {
   try {
+    // console.log("Cookies: ", req); // Debug cookies received
+
+    // const token = req.cookies.token; // Check if token exists
+    // if (!token) return res.status(401).json({ msg: "Unauthorized" });
+
+    // const decoded = jwt.verify(token, "secretkey");
+    // const user = await User.findById(decoded.id).select("-password");
+
+    const authHeader = req.headers.authorization; // Get the Authorization header
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ msg: "Authorization token missing or invalid" });
+    }
+
+    const token = authHeader.split(" ")[1]; // Extract the token part (after "Bearer ")
+    console.log('token in profile  ', token)
+    // Verify the token (using JWT or your chosen library)
+    console.log('jwtseceret', process.env.JWT_SECRET)
+    jwt.verify(token, process.env.JWT_SECRET, async (err, user) => {
+      if (err) {
+        console.log(err)
+        return res.status(403).json({ msg: "Invalid or expired token" });
+      }
+
+      // Token is valid, proceed with the request
+      req.user = user; // Attach the decoded user data to the request object
+      const singleUser = await UserModel.findOne({ email: user.email })
+      console.log('singe user', singleUser)
+      console.log('user in profile', user)
+      res.status(200).json({ msg: "Token is valid", user: singleUser });
+    });
+
+  } catch (error) {
+    console.error("Error: ", error.message);
+    res.status(500).json({ msg: "Error fetching user data", error: error.message });
+  }
+}
+
+// // Submit Loan Request
+// export const submitLoanRequest = async (req, res) => {
+//   const { userId, category, subcategory, amount, loanPeriod, personalInfo, guarantors } = req.body;
+//   try {
+//     const loanRequest = new LoanRequestModel({
+//       user: userId,
+//       category,
+//       subcategory,
+//       amount,
+//       loanPeriod,
+//       personalInfo,
+//       guarantors
+//     });
+//     await loanRequest.save();
+//     res.status(201).json({ message: 'Loan request submitted successfully', loanRequest });
+//   } catch (err) {
+//     console.log('err', err);
+//     res.status(500).json({ error: err.message });
+//   }
+// };
+
+// // Generate Slip
+// export const generateSlip = async (req, res) => {
+//   const { loanRequestId } = req.body;
+//   try {
+//     const loanRequest = await LoanRequestModel.findById(loanRequestId).populate('appointment');
+//     const slip = {
+//       tokenNumber: loanRequest.tokenNumber,
+//       appointment: loanRequest.appointment,
+//       qrCode: await QRCode.toDataURL(`LoanRequest:${loanRequest._id}`)
+//     };
+//     res.status(200).json({ slip });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// };
+
+
+const generateTokenNumber = () => {
+  // Implement your logic to generate a unique token number here.  For example:
+  return Math.random().toString(36).substring(2, 15)
+}
+
+export const submitLoanRequest = async (req, res) => {
+  const { userId, category, subcategory, amount, loanPeriod, personalInfo, guarantors } = req.body
+  try {
+    const tokenNumber = generateTokenNumber()
     const loanRequest = new LoanRequestModel({
       user: userId,
       category,
@@ -96,14 +179,28 @@ export const submitLoanRequest = async (req, res) => {
       amount,
       loanPeriod,
       personalInfo,
-      guarantors
-    });
-    await loanRequest.save();
-    res.status(201).json({ message: 'Loan request submitted successfully', loanRequest });
+      guarantors,
+      tokenNumber,
+      status: "pending",
+    })
+    await loanRequest.save()
+    res.status(201).json({ message: "Loan request submitted successfully", loanRequest })
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.log("err", err)
+    res.status(500).json({ error: err.message })
   }
-};
+}
+
+export const getLoanRequests = async (req, res) => {
+  const { userId } = req.params
+  try {
+    const loanRequests = await LoanRequestModel.find({ user: userId }).sort({ createdAt: -1 })
+    res.status(200).json({ loanRequests })
+  } catch (err) {
+    console.log("err", err)
+    res.status(500).json({ error: err.message })
+  }
+}
 
 // Generate Slip
 export const generateSlip = async (req, res) => {
@@ -120,3 +217,4 @@ export const generateSlip = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
