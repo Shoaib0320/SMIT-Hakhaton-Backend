@@ -3,7 +3,7 @@ import { registerUser, loginUser, submitLoanRequest,
     generateSlip, 
     getUserData, 
     getLoanRequests,
-    getAllLoanRequests} from '../controllers/userController.js';
+    } from '../controllers/userController.js';
 
 const router = express.Router();
 
@@ -11,9 +11,8 @@ router.post('/signup', registerUser);
 router.post('/login', loginUser);
 router.post('/submit-loan', submitLoanRequest);
 router.get('/getLoanRequests/:userId', getLoanRequests);
-router.post('/generate-slip', generateSlip);
+router.get('/generateSlip/:loanRequestId', generateSlip);
 
-router.get("/getAllLoanRequests", getAllLoanRequests);
 router.get("/profile", getUserData);
 
 // // GET route to fetch all users

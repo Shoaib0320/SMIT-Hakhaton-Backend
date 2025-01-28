@@ -6,6 +6,7 @@ import nodemailer from 'nodemailer';
 import QRCode from 'qrcode';
 import UserModel from '../models/User.js';
 import LoanRequestModel from '../models/LoanRequest.js';
+import { createCanvas, loadImage } from "canvas"
 
 const generateToken = (user) => {
   return jwt.sign({ id: user._id, email: user.email, role: user.role }, process.env.JWT_SECRET, {
@@ -169,7 +170,7 @@ const generateTokenNumber = () => {
 }
 
 export const submitLoanRequest = async (req, res) => {
-  const { userId, category, subcategory, amount, loanPeriod, personalInfo, guarantors } = req.body
+  const { userId, category, subcategory, amount, loanPeriod, country, city, personalInfo, guarantors } = req.body
   try {
     const tokenNumber = generateTokenNumber()
     const loanRequest = new LoanRequestModel({
@@ -178,6 +179,8 @@ export const submitLoanRequest = async (req, res) => {
       subcategory,
       amount,
       loanPeriod,
+      country, 
+      city,
       personalInfo,
       guarantors,
       tokenNumber,
@@ -191,70 +194,86 @@ export const submitLoanRequest = async (req, res) => {
   }
 }
 
-// export const getLoanRequests = async (req, res) => {
-//   const { userId } = req.params
-//   try {
-//     const loanRequests = await LoanRequestModel.find({ user: userId }).sort({ createdAt: -1 })
-//     res.status(200).json({ loanRequests })
-
-//   } catch (err) {
-//     console.log("err", err)
-//     res.status(500).json({ error: err.message })
-//   }
-// }
-
 export const getLoanRequests = async (req, res) => {
   const { userId } = req.params
-
   try {
-    const loanRequests = await LoanRequestModel.find()
+    const loanRequests = await LoanRequestModel.find({ user: userId }).sort({ createdAt: -1 })
     res.status(200).json({ loanRequests })
-    console.log('loanRequests', loanRequests);
-    
-  } catch (err) {
-    console.error("Error fetching loan requests:", err)
-    res.status(500).json({ error: err.message })
-  }
-}
 
-// export const getLoanRequests = async (req, res) => {
-//     try {
-//       const userId = req.user._id // Get the user ID from the authenticated user
-//       const loanRequests = await LoanRequestModel.find({ user: userId })
-//         .sort({ createdAt: -1 }) // Sort by creation date, newest first
-//         .populate("user", "name email") // Populate user details if needed
-  
-//       res.status(200).json({ loanRequests })
-//     } catch (err) {
-//       console.error("Error fetching user loan requests:", err)
-//       res.status(500).json({ error: "An error occurred while fetching loan requests" })
-//     }
-// }
-
-
-// Generate Slip
-export const generateSlip = async (req, res) => {
-  const { loanRequestId } = req.body;
-  try {
-    const loanRequest = await LoanRequestModel.findById(loanRequestId).populate('appointment');
-    const slip = {
-      tokenNumber: loanRequest.tokenNumber,
-      appointment: loanRequest.appointment,
-      qrCode: await QRCode.toDataURL(`LoanRequest:${loanRequest._id}`)
-    };
-    res.status(200).json({ slip });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-
-export const getAllLoanRequests = async (req, res) => {
-  try {
-    const loanRequests = await LoanRequestModel.find().populate("user", "name email")
-    res.status(200).json({ loanRequests })
   } catch (err) {
     console.log("err", err)
     res.status(500).json({ error: err.message })
   }
 }
+
+// // Generate Slip
+// export const generateSlip = async (req, res) => {
+//   const { loanRequestId } = req.body;
+//   try {
+//     const loanRequest = await LoanRequestModel.findById(loanRequestId).populate('appointment');
+//     const slip = {
+//       tokenNumber: loanRequest.tokenNumber,
+//       appointment: loanRequest.appointment,
+//       qrCode: await QRCode.toDataURL(`LoanRequest:${loanRequest._id}`)
+//     };
+//     res.status(200).json({ slip });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// };
+
+
+
+
+// Generate Slip
+export const generateSlip = async (req, res) => {
+  const { loanRequestId } = req.params
+  try {
+    const loanRequest = await LoanRequestModel.findById(loanRequestId)
+    if (!loanRequest) {
+      return res.status(404).json({ error: "Loan request not found" })
+    }
+
+    const canvas = createCanvas(400, 600)
+    const ctx = canvas.getContext("2d")
+
+    // Set background
+    ctx.fillStyle = "#ffffff"
+    ctx.fillRect(0, 0, 400, 600)
+
+    // Draw header
+    ctx.fillStyle = "#000000"
+    ctx.font = "bold 24px Arial"
+    ctx.fillText("Loan Request Slip", 100, 50)
+
+    // Draw token number
+    ctx.font = "bold 36px Arial"
+    ctx.fillText(`Token: ${loanRequest.tokenNumber}`, 100, 150)
+
+    // Draw other details
+    ctx.font = "18px Arial"
+    ctx.fillText(`Category: ${loanRequest.category}`, 50, 250)
+    ctx.fillText(`Amount: ${loanRequest.amount} PKR`, 50, 280)
+    ctx.fillText(`Loan Period: ${loanRequest.loanPeriod} months`, 50, 310)
+    ctx.fillText(`Status: ${loanRequest.status.toUpperCase()}`, 50, 340)
+
+    // Generate and draw QR code
+    const qrCodeDataUrl = await QRCode.toDataURL(`LoanRequest:${loanRequest._id}`)
+    const qrCodeImage = await loadImage(qrCodeDataUrl)
+    ctx.drawImage(qrCodeImage, 150, 400, 100, 100)
+
+    // Convert canvas to buffer
+    const buffer = canvas.toBuffer("image/png")
+
+    // Set response headers
+    res.setHeader("Content-Type", "image/png")
+    res.setHeader("Content-Disposition", `attachment; filename=loan_slip_${loanRequestId}.png`)
+
+    // Send the image buffer
+    res.send(buffer)
+  } catch (err) {
+    console.error("Error generating slip:", err)
+    res.status(500).json({ error: err.message })
+  }
+}
+
