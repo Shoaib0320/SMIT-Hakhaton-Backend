@@ -20,7 +20,7 @@ const loanRequestSchema = new mongoose.Schema({
   },
   statement: { type: String },
   salarySheet: { type: String },
-  tokenNumber: { type: String },
+  tokenNumber: { type: String , unique: true  },
   appointment: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment' },
   status: { 
     type: String,
