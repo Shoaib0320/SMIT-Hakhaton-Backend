@@ -1,43 +1,3 @@
-// import LoanRequestModel from "../models/LoanRequest.js";
-// import AppointmentModel from '../models/Appointment.js';
-
-// // // View Applications
-// // export const getApplications = async (req, res) => {
-// //   try {
-// //     const applications = await LoanRequestModel.find().populate('user guarantors appointment');
-// //     res.status(200).json(applications);
-// //   } catch (err) {
-// //     res.status(500).json({ error: err.message });
-// //   }
-// // };
-
-// // Update Application Status
-// export const updateApplicationStatus = async (req, res) => {
-//   const { applicationId, status } = req.body;
-//   try {
-//     const application = await LoanRequestModel.findByIdAndUpdate(applicationId, { status }, { new: true });
-//     res.status(200).json({ message: 'Application status updated', application });
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// };
-
-
-// export const getAllLoanRequests = async (req, res) => {
-//   try {
-//     const loanRequests = await LoanRequestModel.find().populate("user", "name email")
-//     res.status(200).json({ loanRequests })
-//   } catch (err) {
-//     console.log("err", err)
-//     res.status(500).json({ error: err.message })
-//   }
-// }
-
-
-
-
-
-
 import LoanRequestModel from "../models/LoanRequest.js"
 import AppointmentModel from "../models/Appointment.js"
 
@@ -78,18 +38,25 @@ export const updateApplicationStatus = async (req, res) => {
 
 export const createAppointment = async (req, res) => {
   const { loanRequestId, date, time, officeLocation } = req.body
+
+  console.log('Request Body', req.body);
+  
   try {
     const appointment = new AppointmentModel({
       loanRequest: loanRequestId,
       date,
       time,
       officeLocation,
+      tokenNumber: `TOK-${Date.now()}` // Generate unique token
     })
     await appointment.save()
+
+    console.log('Appointment', appointment);
 
     const updatedLoanRequest = await LoanRequestModel.findByIdAndUpdate(
       loanRequestId,
       { appointment: appointment._id },
+      { $set: { tokenNumber: `TOK-${new Date().getTime()}` } },
       { new: true },
     )
 
@@ -99,6 +66,25 @@ export const createAppointment = async (req, res) => {
   } catch (err) {
     console.log('Error', err);
     
+    res.status(500).json({ error: err.message })
+  }
+}
+
+
+export const getAllAppointments = async (req, res) => {
+  try {
+    const appointments = await AppointmentModel.find()
+      .populate("loanRequest")
+      .populate({
+        path: "loanRequest",
+        populate: {
+          path: "user",
+          select: "name email",
+        },
+      })
+    res.status(200).json({ appointments })
+  } catch (err) {
+    console.log("err", err)
     res.status(500).json({ error: err.message })
   }
 }

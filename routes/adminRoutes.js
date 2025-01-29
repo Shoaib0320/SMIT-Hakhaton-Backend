@@ -1,6 +1,7 @@
 import express from 'express';
 import {
     createAppointment,
+    getAllAppointments,
     getAllLoanRequests,
     //  getApplications,
     updateApplicationStatus
@@ -12,5 +13,6 @@ const router = express.Router();
 router.put('/update-status', updateApplicationStatus);
 router.get("/getAllLoanRequests", getAllLoanRequests);
 router.post("/createAppointment", createAppointment)
+router.get("/getAllAppointments", getAllAppointments)
 
 export default router;
