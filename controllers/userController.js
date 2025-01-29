@@ -164,9 +164,10 @@ export const getUserData = async (req, res) => {
 // };
 
 
+// Generate Numeric Token (4 or 6 Digits)
 const generateTokenNumber = () => {
-  // Implement your logic to generate a unique token number here.  For example:
-  return Math.random().toString(36).substring(2, 15)
+  return Math.floor(1000 + Math.random() * 9000) // 4-digit token
+  // return Math.floor(100000 + Math.random() * 900000) // 6-digit token (if required)
 }
 
 export const submitLoanRequest = async (req, res) => {
@@ -206,74 +207,95 @@ export const getLoanRequests = async (req, res) => {
   }
 }
 
-// // Generate Slip
-// export const generateSlip = async (req, res) => {
-//   const { loanRequestId } = req.body;
-//   try {
-//     const loanRequest = await LoanRequestModel.findById(loanRequestId).populate('appointment');
-//     const slip = {
-//       tokenNumber: loanRequest.tokenNumber,
-//       appointment: loanRequest.appointment,
-//       qrCode: await QRCode.toDataURL(`LoanRequest:${loanRequest._id}`)
-//     };
-//     res.status(200).json({ slip });
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// };
-
-
-
-
 // Generate Slip
 export const generateSlip = async (req, res) => {
-  const { loanRequestId } = req.params
+  const { loanRequestId } = req.params;
   try {
-    const loanRequest = await LoanRequestModel.findById(loanRequestId)
+    const loanRequest = await LoanRequestModel.findById(loanRequestId);
     if (!loanRequest) {
-      return res.status(404).json({ error: "Loan request not found" })
+      return res.status(404).json({ error: "Loan request not found" });
     }
 
-    const canvas = createCanvas(400, 600)
-    const ctx = canvas.getContext("2d")
+    const canvas = createCanvas(400, 600);
+    const ctx = canvas.getContext("2d");
 
-    // Set background
-    ctx.fillStyle = "#ffffff"
-    ctx.fillRect(0, 0, 400, 600)
+    // Background Styling (Soft Gray)
+    ctx.fillStyle = "#f8f9fa";
+    ctx.fillRect(0, 0, 400, 600);
 
-    // Draw header
-    ctx.fillStyle = "#000000"
-    ctx.font = "bold 24px Arial"
-    ctx.fillText("Loan Request Slip", 100, 50)
+    // Outer Box (White Slip)
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(20, 20, 360, 560);
 
-    // Draw token number
-    ctx.font = "bold 36px Arial"
-    ctx.fillText(`Token: ${loanRequest.tokenNumber}`, 100, 150)
+    // Shadow Effect for Slip
+    ctx.shadowColor = "rgba(0, 0, 0, 0.15)";
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
 
-    // Draw other details
-    ctx.font = "18px Arial"
-    ctx.fillText(`Category: ${loanRequest.category}`, 50, 250)
-    ctx.fillText(`Amount: ${loanRequest.amount} PKR`, 50, 280)
-    ctx.fillText(`Loan Period: ${loanRequest.loanPeriod} months`, 50, 310)
-    ctx.fillText(`Status: ${loanRequest.status.toUpperCase()}`, 50, 340)
+    // Header (Professional Look)
+    ctx.fillStyle = "#2c3e50";
+    ctx.font = "bold 24px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Loan Request Slip", 200, 60);
 
-    // Generate and draw QR code
-    const qrCodeDataUrl = await QRCode.toDataURL(`LoanRequest:${loanRequest._id}`)
-    const qrCodeImage = await loadImage(qrCodeDataUrl)
-    ctx.drawImage(qrCodeImage, 150, 400, 100, 100)
+    // Horizontal Line
+    ctx.fillStyle = "#dcdcdc";
+    ctx.fillRect(50, 80, 300, 2);
 
-    // Convert canvas to buffer
-    const buffer = canvas.toBuffer("image/png")
+    // Token Number
+    ctx.fillStyle = "#e74c3c";
+    ctx.font = "bold 30px Arial";
+    ctx.fillText(`Token: ${loanRequest.tokenNumber}`, 200, 130);
 
-    // Set response headers
-    res.setHeader("Content-Type", "image/png")
-    res.setHeader("Content-Disposition", `attachment; filename=loan_slip_${loanRequestId}.png`)
+    // Loan Details Section
+    ctx.fillStyle = "#34495e";
+    ctx.font = "16px Arial";
+    ctx.textAlign = "left";
+    ctx.fillText(`Category:`, 50, 180);
+    ctx.fillText(loanRequest.category, 200, 180);
 
-    // Send the image buffer
-    res.send(buffer)
+    ctx.fillText(`Sub Category:`, 50, 220);
+    ctx.fillText(loanRequest.subcategory, 200, 220);
+
+    ctx.fillText(`Amount:`, 50, 260);
+    ctx.fillText(`${loanRequest.amount} PKR`, 200, 260);
+
+    ctx.fillText(`Loan Period:`, 50, 300);
+    ctx.fillText(`${loanRequest.loanPeriod} months`, 200, 300);
+
+    // Loan Status (Professional Look)
+    ctx.font = "bold 16px Arial";
+    ctx.fillText(`Status:`, 50, 340);
+
+    if (loanRequest.status === "approved") {
+      ctx.fillStyle = "#27ae60"; // Green for approved
+    } else if (loanRequest.status === "pending") {
+      ctx.fillStyle = "#f39c12"; // Orange for pending
+    } else {
+      ctx.fillStyle = "#c0392b"; // Red for rejected
+    }
+    ctx.fillText(loanRequest.status.toUpperCase(), 200, 340);
+
+    // QR Code
+    const qrCodeDataUrl = await QRCode.toDataURL(`LoanRequest:${loanRequest._id}`);
+    const qrCodeImage = await loadImage(qrCodeDataUrl);
+    ctx.drawImage(qrCodeImage, 140, 420, 120, 120);
+
+    // QR Code Border for a Clean Look
+    ctx.strokeStyle = "#2c3e50";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(140, 420, 120, 120);
+
+    // Convert to Buffer
+    const buffer = canvas.toBuffer("image/png");
+
+    // Send Response
+    res.setHeader("Content-Type", "image/png");
+    res.setHeader("Content-Disposition", `attachment; filename=loan_slip_${loanRequestId}.png`);
+    res.send(buffer);
   } catch (err) {
-    console.error("Error generating slip:", err)
-    res.status(500).json({ error: err.message })
+    console.error("Error generating slip:", err);
+    res.status(500).json({ error: err.message });
   }
-}
-
+};
