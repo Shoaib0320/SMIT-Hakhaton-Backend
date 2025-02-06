@@ -7,6 +7,7 @@ import QRCode from 'qrcode';
 import UserModel from '../models/User.js';
 import LoanRequestModel from '../models/LoanRequest.js';
 import { createCanvas, loadImage } from "canvas"
+import { upload } from '../config/CloudnaryConfig.js';
 
 const generateToken = (user) => {
   return jwt.sign({ id: user._id, email: user.email, role: user.role }, process.env.JWT_SECRET, {

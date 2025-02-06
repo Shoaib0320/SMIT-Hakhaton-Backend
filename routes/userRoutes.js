@@ -4,6 +4,8 @@ import { registerUser, loginUser, submitLoanRequest,
     getUserData, 
     getLoanRequests,
     } from '../controllers/userController.js';
+import { upload } from '../config/CloudnaryConfig.js';
+import LoanRequestModel from '../models/LoanRequest.js';
 
 const router = express.Router();
 
@@ -15,38 +17,50 @@ router.get('/generateSlip/:loanRequestId', generateSlip);
 
 router.get("/profile", getUserData);
 
-// // GET route to fetch all users
-// router.get('/getAllUsers', async (req, res) => {
-// 	try {
-// 	  const users = await User.find({}, 'name email role');
-// 	  res.json(users);
-// 	} catch (error) {
-// 	  console.error('Error fetching users:', error);
-// 	  res.status(500).json({ error: 'Internal Server Error' });
-// 	}
-//   });
+// Middleware for file upload
+const uploadFields = upload.fields([
+  { name: "userCnic", maxCount: 1 },
+  { name: "guarantorCnic", maxCount: 3 }, // Maximum 3 guarantors
+]);
 
-// // Modify the getAllUsers route
-// router.get('/getAllUsers', async (req, res) => {
-// 	try {
-// 		const users = await User.find({}, 'name email role');
+router.post("/submit-loan", uploadFields, async (req, res) => {
+  try {
+    const { userId, category, subcategory, amount, loanPeriod, deposit, country, city, personalInfo, guarantors } = req.body;
 
-// 		// Check if each student user exists in the Student database
-// 		const usersWithStatus = await Promise.all(users.map(async (user) => {
-// 			if (user.role === 'student') {
-// 				const studentExists = await Student.findOne({ email: user.email });
-// 				return { ...user.toObject(), studentStatus: studentExists ? 'registered' : 'unregistered' };
-// 			}
-// 			return user.toObject();
-// 		}));
+    console.log('Request Body', req.body);
 
-// 		res.json(usersWithStatus);
-// 	} catch (error) {
-// 		console.error('Error fetching users:', error);
-// 		res.status(500).json({ error: 'Internal Server Error' });
-// 	}
-// });
+    const tokenNumber = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit token
 
+    const loanRequest = new LoanRequestModel({
+      user: userId,
+      category,
+      subcategory,
+      amount,
+      deposit,
+      loanPeriod,
+      country, 
+      city,
+      personalInfo: {
+        ...JSON.parse(personalInfo),
+        cnicImage: req.files["userCnic"] ? req.files["userCnic"][0].path : null,
+      },
+      guarantors: JSON.parse(guarantors).map((g, index) => ({
+        ...g,
+        cnicImage: req.files["guarantorCnic"] && req.files["guarantorCnic"][index] 
+          ? req.files["guarantorCnic"][index].path 
+          : null,
+      })),
+      tokenNumber,
+      status: "pending",
+    });
+
+    await loanRequest.save();
+    res.status(201).json({ message: "Loan request submitted successfully", loanRequest });
+  } catch (err) {
+    console.error("Error submitting loan request:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 
 export default router;
