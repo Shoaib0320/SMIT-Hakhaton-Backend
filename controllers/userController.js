@@ -10,7 +10,7 @@ import { createCanvas, loadImage } from "canvas"
 
 const generateToken = (user) => {
   return jwt.sign({ id: user._id, email: user.email, role: user.role }, process.env.JWT_SECRET, {
-    expiresIn: "1h",
+    expiresIn: "3h",
   });
 };
 
@@ -59,14 +59,6 @@ export const loginUser = async (req, res) => {
 
 export const getUserData = async (req, res) => {
   try {
-    // console.log("Cookies: ", req); // Debug cookies received
-
-    // const token = req.cookies.token; // Check if token exists
-    // if (!token) return res.status(401).json({ msg: "Unauthorized" });
-
-    // const decoded = jwt.verify(token, "secretkey");
-    // const user = await User.findById(decoded.id).select("-password");
-
     const authHeader = req.headers.authorization; // Get the Authorization header
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -104,7 +96,10 @@ const generateTokenNumber = () => {
 }
 
 export const submitLoanRequest = async (req, res) => {
-  const { userId, category, subcategory, amount, loanPeriod, country, city, personalInfo, guarantors } = req.body
+
+  const { userId, category, subcategory, amount, loanPeriod, deposit, country, city, personalInfo, guarantors } = req.body
+  console.log('Request Body', req.body);
+  
   try {
     const tokenNumber = generateTokenNumber()
     const loanRequest = new LoanRequestModel({
@@ -112,6 +107,7 @@ export const submitLoanRequest = async (req, res) => {
       category,
       subcategory,
       amount,
+      deposit,
       loanPeriod,
       country, 
       city,
@@ -128,107 +124,117 @@ export const submitLoanRequest = async (req, res) => {
   }
 }
 
+export const generateSlip = async (req, res) => {
+  const { loanRequestId } = req.params
+  try {
+    const loanRequest = await LoanRequestModel.findById(loanRequestId).populate("appointment")
+    if (!loanRequest) {
+      return res.status(404).json({ error: "Loan request not found" })
+    }
+
+    const canvas = createCanvas(400, 700)
+    const ctx = canvas.getContext("2d")
+
+    // Background
+    ctx.fillStyle = "#f0f4f8"
+    ctx.fillRect(0, 0, 400, 700)
+
+    // Slip background
+    ctx.fillStyle = "#ffffff"
+    ctx.fillRect(20, 20, 360, 660)
+
+    // Shadow effect
+    ctx.shadowColor = "rgba(0, 0, 0, 0.2)"
+    ctx.shadowBlur = 10
+    ctx.shadowOffsetX = 3
+    ctx.shadowOffsetY = 3
+
+    // Header
+    ctx.fillStyle = "#1a365d"
+    ctx.font = "bold 28px Arial"
+    ctx.textAlign = "center"
+    ctx.fillText("Loan Request Slip", 200, 60)
+
+    // Horizontal line
+    ctx.strokeStyle = "#4299e1"
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(50, 80)
+    ctx.lineTo(350, 80)
+    ctx.stroke()
+
+    // Token Number
+    ctx.fillStyle = "#e53e3e"
+    ctx.font = "bold 32px Arial"
+    ctx.fillText(`Token: ${loanRequest.tokenNumber}`, 200, 130)
+
+    // Loan Details
+    ctx.fillStyle = "#2d3748"
+    ctx.font = "18px Arial"
+    ctx.textAlign = "left"
+
+    const details = [
+      { label: "Category:", value: loanRequest.category },
+      { label: "Sub Category:", value: loanRequest.subcategory },
+      { label: "Amount:", value: `${loanRequest.amount} PKR` },
+      { label: "Loan Period:", value: `${loanRequest.loanPeriod} months` },
+    ]
+
+    details.forEach((detail, index) => {
+      ctx.fillText(detail.label, 50, 180 + index * 40)
+      ctx.fillText(detail.value, 200, 180 + index * 40)
+    })
+
+    // Appointment Details
+    ctx.fillStyle = "#2b6cb0"
+    ctx.font = "bold 22px Arial"
+    ctx.textAlign = "center"
+    ctx.fillText("Appointment Details", 200, 380)
+
+    ctx.fillStyle = "#2d3748"
+    ctx.font = "18px Arial"
+    ctx.textAlign = "left"
+
+    if (loanRequest.appointment) {
+      const appointmentDate = new Date(loanRequest.appointment.date).toLocaleDateString()
+      ctx.fillText(`Date: ${appointmentDate}`, 50, 420)
+      ctx.fillText(`Time: ${loanRequest.appointment.time}`, 50, 460)
+      ctx.fillText(`Location: ${loanRequest.appointment.officeLocation}`, 50, 500)
+    } else {
+      ctx.fillText("Appointment not scheduled yet", 50, 420)
+    }
+
+    // QR Code
+    const qrCodeDataUrl = await QRCode.toDataURL(`LoanRequest:${loanRequest._id}`)
+    const qrCodeImage = await loadImage(qrCodeDataUrl)
+    ctx.drawImage(qrCodeImage, 140, 540, 120, 120)
+
+    // QR Code Border
+    ctx.strokeStyle = "#4299e1"
+    ctx.lineWidth = 3
+    ctx.strokeRect(140, 540, 120, 120)
+
+    // Convert to Buffer
+    const buffer = canvas.toBuffer("image/png")
+
+    // Send Response
+    res.setHeader("Content-Type", "image/png")
+    res.setHeader("Content-Disposition", `attachment; filename=loan_slip_${loanRequestId}.png`)
+    res.send(buffer)
+  } catch (err) {
+    console.error("Error generating slip:", err)
+    res.status(500).json({ error: err.message })
+  }
+}
+
 export const getLoanRequests = async (req, res) => {
   const { userId } = req.params
   try {
-    const loanRequests = await LoanRequestModel.find({ user: userId }).sort({ createdAt: -1 })
+    const loanRequests = await LoanRequestModel.find({ user: userId }).sort({ createdAt: -1 }).populate("appointment")
     res.status(200).json({ loanRequests })
-
   } catch (err) {
     console.log("err", err)
     res.status(500).json({ error: err.message })
   }
 }
 
-// Generate Slip
-export const generateSlip = async (req, res) => {
-  const { loanRequestId } = req.params;
-  try {
-    const loanRequest = await LoanRequestModel.findById(loanRequestId);
-    if (!loanRequest) {
-      return res.status(404).json({ error: "Loan request not found" });
-    }
-
-    const canvas = createCanvas(400, 600);
-    const ctx = canvas.getContext("2d");
-
-    // Background Styling (Soft Gray)
-    ctx.fillStyle = "#f8f9fa";
-    ctx.fillRect(0, 0, 400, 600);
-
-    // Outer Box (White Slip)
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(20, 20, 360, 560);
-
-    // Shadow Effect for Slip
-    ctx.shadowColor = "rgba(0, 0, 0, 0.15)";
-    ctx.shadowBlur = 8;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
-
-    // Header (Professional Look)
-    ctx.fillStyle = "#2c3e50";
-    ctx.font = "bold 24px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("Loan Request Slip", 200, 60);
-
-    // Horizontal Line
-    ctx.fillStyle = "#dcdcdc";
-    ctx.fillRect(50, 80, 300, 2);
-
-    // Token Number
-    ctx.fillStyle = "#e74c3c";
-    ctx.font = "bold 30px Arial";
-    ctx.fillText(`Token: ${loanRequest.tokenNumber}`, 200, 130);
-
-    // Loan Details Section
-    ctx.fillStyle = "#34495e";
-    ctx.font = "16px Arial";
-    ctx.textAlign = "left";
-    ctx.fillText(`Category:`, 50, 180);
-    ctx.fillText(loanRequest.category, 200, 180);
-
-    ctx.fillText(`Sub Category:`, 50, 220);
-    ctx.fillText(loanRequest.subcategory, 200, 220);
-
-    ctx.fillText(`Amount:`, 50, 260);
-    ctx.fillText(`${loanRequest.amount} PKR`, 200, 260);
-
-    ctx.fillText(`Loan Period:`, 50, 300);
-    ctx.fillText(`${loanRequest.loanPeriod} months`, 200, 300);
-
-    // Loan Status (Professional Look)
-    ctx.font = "bold 16px Arial";
-    ctx.fillText(`Status:`, 50, 340);
-
-    if (loanRequest.status === "approved") {
-      ctx.fillStyle = "#27ae60"; // Green for approved
-    } else if (loanRequest.status === "pending") {
-      ctx.fillStyle = "#f39c12"; // Orange for pending
-    } else {
-      ctx.fillStyle = "#c0392b"; // Red for rejected
-    }
-    ctx.fillText(loanRequest.status.toUpperCase(), 200, 340);
-
-    // QR Code
-    const qrCodeDataUrl = await QRCode.toDataURL(`LoanRequest:${loanRequest._id}`);
-    const qrCodeImage = await loadImage(qrCodeDataUrl);
-    ctx.drawImage(qrCodeImage, 140, 420, 120, 120);
-
-    // QR Code Border for a Clean Look
-    ctx.strokeStyle = "#2c3e50";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(140, 420, 120, 120);
-
-    // Convert to Buffer
-    const buffer = canvas.toBuffer("image/png");
-
-    // Send Response
-    res.setHeader("Content-Type", "image/png");
-    res.setHeader("Content-Disposition", `attachment; filename=loan_slip_${loanRequestId}.png`);
-    res.send(buffer);
-  } catch (err) {
-    console.error("Error generating slip:", err);
-    res.status(500).json({ error: err.message });
-  }
-};

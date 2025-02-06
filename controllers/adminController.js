@@ -70,7 +70,6 @@ export const createAppointment = async (req, res) => {
   }
 }
 
-
 export const getAllAppointments = async (req, res) => {
   try {
     const appointments = await AppointmentModel.find()

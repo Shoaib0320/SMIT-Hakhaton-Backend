@@ -4,6 +4,7 @@ const loanRequestSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   category: { type: String, required: true },
   subcategory: { type: String, required: true },
+  deposit: { type: Number, required: true }, // Add deposit field
   amount: { type: Number, required: true },
   loanPeriod: { type: Number, required: true },
   country: { type: String, required: true },
