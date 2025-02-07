@@ -52,13 +52,13 @@ const loanRequestSchema = new mongoose.Schema({
   personalInfo: {
     address: { type: String, required: true },
     phoneNumber: { type: String, required: true },
-    cnicImage: { type: String, required: true } // CNIC image added
+    // cnicImage: { type: String, required: true } // CNIC image added
   },
   guarantors: [
     {
       name: { type: String, required: true },
       phoneNumber: { type: String, required: true },
-      cnicImage: { type: String, required: true } // Guarantor CNIC
+      // cnicImage: { type: String, required: true } // Guarantor CNIC
     },
   ],
   statement: { type: String },
